@@ -5,7 +5,7 @@ let {UserModel} = require("./model/UserModel");
 let {TodoModel} = require("./model/TodoListModel");
 let {ObjectID} = require("mongodb");
 
-
+let port = process.env.PORT || 3000;
 let app = express();
 app.use(bodyParser.json());
 
@@ -41,8 +41,8 @@ app.get("/todos/:id",(request,response)=>{
     });
 });
 
-app.listen(3001,()=>{
-    console.log("Server Connected to port 3001");
+app.listen(port,()=>{
+    console.log(`Server Connected to port ${port}`);
 });
 
 module.exports = {app};
