@@ -13,13 +13,20 @@ app.post("/todos",(request,response)=>{
     newNote.save().then(result=>{
         response.send(result);
     },err=>{
-        response.status(400).send(err)
+        response.status(400).send(err);
+    })
+});
+
+app.get("/todos",(request,response)=>{
+    TodoModel.find().then(results=>{
+        response.send({results});
+    },err=>{
+        response.status(400).send(err);
     })
 });
 
 app.listen(3001,()=>{
     console.log("Server Connected to port 3001");
 });
-
 
 module.exports = {app};

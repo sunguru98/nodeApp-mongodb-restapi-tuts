@@ -28,19 +28,19 @@ describe("POST/todos",()=>{
             });
     });
 
-    // it("should not create a row when no Object is inputted",done=>{
-    //     request(app)
-    //         .post("/todos")
-    //         .send({})
-    //         .expect(400)
-    //         .end((err,res)=>{
-    //             if(err){
-    //                 return done(err);
-    //             }
-    //             TodoModel.find().then(results=>{
-    //                 expect(results.length).toBe(0);
-    //                 done();
-    //             }).catch(e=>{done(e);})
-    //         });
-    // })
+    it("should not create a row when no Object is inputted",done=>{
+        request(app)
+            .post("/todos")
+            .send({})
+            .expect(400)
+            .end((err,res)=>{
+                if(err){
+                    return done(err);
+                }
+                TodoModel.find().then(results=>{
+                    expect(results.length).toBe(0);
+                    done();
+                }).catch(e=>{done(e);})
+            });
+    })
 })
