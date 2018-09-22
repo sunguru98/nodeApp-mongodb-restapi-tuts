@@ -1,8 +1,8 @@
 let express = require("express");
 let bodyParser = require("body-parser");
-let {mongoose} = require("../db/db.js");
-let {UserModel} = require("../model/UserModel");
-let {TodoModel} = require("../model/TodoListModel");
+let {mongoose} = require("./db/db.js");
+let {UserModel} = require("./model/UserModel");
+let {TodoModel} = require("./model/TodoListModel");
 
 
 let app = express();
@@ -22,3 +22,4 @@ app.listen(3001,()=>{
 });
 
 
+module.exports = {app};
