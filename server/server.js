@@ -3,6 +3,7 @@ let bodyParser = require("body-parser");
 let {mongoose} = require("./db/db.js");
 let {UserModel} = require("./model/UserModel");
 let {TodoModel} = require("./model/TodoListModel");
+let {ObjectID} = require("mongodb");
 
 
 let app = express();
@@ -23,6 +24,20 @@ app.get("/todos",(request,response)=>{
     },err=>{
         response.status(400).send(err);
     })
+});
+
+app.get("/todos/:id",(request,response)=>{
+    let receivedId = request.params.id;
+    if(!ObjectID.isValid(receivedId))
+        return response.status(404).send();
+    TodoModel.findById(receivedId).then(todo=>{
+        if(!todo){
+            return response.status(404).send();
+        }
+        response.send(todo);
+    }).catch(e=>{
+        return resposne.status(400).send(e);
+    });
 });
 
 app.listen(3001,()=>{
