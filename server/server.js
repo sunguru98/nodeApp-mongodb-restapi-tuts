@@ -8,6 +8,7 @@ let {ObjectID} = require("mongodb");
 
 let app = express();
 app.use(bodyParser.json());
+
 app.post("/todos",(request,response)=>{
     let noteName = request.body.noteName;
     let newNote = new TodoModel({noteName});
@@ -34,7 +35,7 @@ app.get("/todos/:id",(request,response)=>{
         if(!todo){
             return response.status(404).send();
         }
-        response.send(todo);
+        response.send({todo});
     }).catch(e=>{
         return resposne.status(400).send(e);
     });

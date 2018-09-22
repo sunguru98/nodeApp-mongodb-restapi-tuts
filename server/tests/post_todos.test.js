@@ -2,12 +2,16 @@ let request = require("supertest");
 let expect = require("expect");
 let {app} = require("./../server");
 let {TodoModel} = require("./../model/TodoListModel");
+let {ObjectID} = require("mongodb");
 
 let dummyTodos = [{
+    _id:new ObjectID(),
     noteName:"Hello There"
 },{
+    _id:new ObjectID(),
     noteName:"Hi Everyone !"
 },{
+    _id:new ObjectID(),
     noteName:"Goodbye ALL of you present !"
 }];
 
@@ -64,6 +68,32 @@ describe("GET /todos",()=>{
             .expect(res=>{
                 expect(res.body.results.length).toBe(3) ;
             })
+            .end(done);
+    });
+});
+
+describe("GET/todos/:id",()=>{
+    it("should return the correct todo when passing correct id",(done)=>{
+        request(app)
+            .get(`/todos/${dummyTodos[0]._id.toHexString()}`)
+            .expect(200)
+            .expect(res=>{
+                expect(res.body.todo.noteName).toBe(dummyTodos[0].noteName);
+            })
+            .end(done);
+    });
+
+    it("should return 404 if given id doesn't exist",(done)=>{
+        request(app)
+            .get(`/todos/${new ObjectID().toHexString()}`)
+            .expect(404)
+            .end(done);
+    });
+
+    it("should return 404 if it is not a syntactical correct id",(done)=>{
+        request(app)
+            .get(`/todos/123}`)
+            .expect(404)
             .end(done);
     });
 });
