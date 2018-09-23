@@ -45,7 +45,7 @@ app.delete("/todos/:id",(req,res)=>{
     let receivedId = req.params.id;
     if(!ObjectID.isValid(receivedId))
         return res.status(404).send();
-    TodoModel.findOneAndDelete(receivedId).then(todo=>{
+    TodoModel.findByIdAndRemove(receivedId).then(todo=>{
         if(!todo)
             return res.status(404).send();
          res.status(200).send({todo});

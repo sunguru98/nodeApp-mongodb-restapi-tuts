@@ -97,3 +97,38 @@ describe("GET/todos/:id",()=>{
             .end(done);
     });
 });
+
+
+describe("DELETE/todos/:id",()=>{
+    it("should delete a document successfully with the help of id",(done)=>{
+        let inputtedId = dummyTodos[0]._id.toHexString();
+        request(app)
+            .delete(`/todos/${inputtedId}`)
+            .expect(200)
+            .expect(res=>{
+                expect(res.body.todo._id).toBe(inputtedId);
+            })
+            .end((err,res)=>{
+                if(err)
+                    done(err);
+                TodoModel.findById(inputtedId).then((res)=>{
+                    expect(res).toBeFalsy();
+                    done();
+                }).catch(e=>{done(e)})
+            });
+    });
+
+    it("doesnt delete when no id is present even if it is valid",(done)=>{
+        request(app)
+            .delete(`/todos/${new ObjectID().toHexString()}`)
+            .expect(404)
+            .end(done);
+    });
+
+    it("should not delete when given an invalid id",(done)=>{
+        request(app)
+        .delete(`/todos/123}`)
+        .expect(404)
+        .end(done);
+    })
+});
