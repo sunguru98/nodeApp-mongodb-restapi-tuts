@@ -12,7 +12,9 @@ let dummyTodos = [{
     noteName:"Hi Everyone !"
 },{
     _id:new ObjectID(),
-    noteName:"Goodbye ALL of you present !"
+    noteName:"Goodbye ALL of you present !",
+    noteCompleted:true,
+    noteToBeCompletedAt:234346,
 }];
 
 beforeEach(done=>{
@@ -131,4 +133,56 @@ describe("DELETE/todos/:id",()=>{
         .expect(404)
         .end(done);
     })
+});
+
+describe("PATCH /todos/:id",()=>{
+    it("should update the todo",(done)=>{
+        let noteName = "Test Running through mocha";
+        let inputtedId = dummyTodos[2]._id.toHexString();
+        request(app)
+            .patch(`/todos/${inputtedId}`)
+            .send({noteName,noteCompleted:true})
+            .expect(200)
+            .expect(res=>{
+                expect(res.body.todoResult.noteName).toBe(noteName);
+                expect(res.body.todoResult.noteCompleted).toBe(true);
+                expect(typeof res.body.todoResult.noteToBeCompletedAt).toBe('number');
+                
+            })
+            .end((err,res)=>{
+                if(err)
+                    done(err);
+                    TodoModel.findById(inputtedId).then(todo=>{
+                        expect(todo.noteName).toBe(noteName);
+                        expect(todo.noteCompleted).toBe(true);
+                        expect(typeof res.body.todoResult.noteToBeCompletedAt).toBe('number');
+                    done();
+                }).catch(e=>{done(e)})
+            });
+        });
+
+    it("should clear completedAt when todo is not completed",(done)=>{
+        inputtedId = dummyTodos[1]._id.toHexString();
+        let noteName = "Updated Text for testing";
+        request(app)
+            .patch(`/todos/${inputtedId}`)
+            .send({noteName,noteCompleted:false})
+            .expect(200)
+            .expect(res=>{
+                expect(res.body.todoResult.noteName).toBe(noteName);
+                expect(res.body.todoResult.noteCompleted).toBe(false);
+                expect(res.body.todoResult.noteToBeCompletedAt).toBeFalsy();
+                
+            })
+            .end((err,res)=>{
+                if(err)
+                    done(err);
+                    TodoModel.findById(inputtedId).then(todo=>{
+                        expect(todo.noteName).toBe(noteName);
+                        expect(todo.noteCompleted).toBe(false);
+                        expect(res.body.todoResult.noteToBeCompletedAt).toBeFalsy();
+                    done();
+                }).catch(e=>{done(e)})
+            });
+    });
 });

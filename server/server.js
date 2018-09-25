@@ -59,7 +59,6 @@ app.delete("/todos/:id",(req,res)=>{
 app.patch("/todos/:id",(req,res)=>{
     let inputtedId = req.params.id;
     let updatedItemsObject = _.pick(req.body,["noteName","noteCompleted"]);
-    console.log(updatedItemsObject);
     if(!ObjectID.isValid(inputtedId))
         return res.status(404).send();
     if(_.isBoolean(updatedItemsObject.noteCompleted) && updatedItemsObject.noteCompleted){
