@@ -2,6 +2,7 @@ let express = require("express");
 let bodyParser = require("body-parser");
 let {mongoose} = require("./db/db.js");
 let {TodoModel} = require("./model/TodoListModel");
+let {UserModel} = require("./model/UserModel");
 let {ObjectID} = require("mongodb");
 let _ = require("lodash");
 
@@ -17,6 +18,19 @@ app.post("/todos",(request,response)=>{
         response.send(result);
     },err=>{
         response.status(400).send(err);
+    })
+});
+
+app.post("/users",(request,response)=>{
+    let userDetails = _.pick(request.body,["email","password"]);
+    let newUser = new UserModel(userDetails);
+    newUser.save().then(()=>{
+        return newUser.generateAuthToken();
+    }).then(receivedToken=>{
+        response.header("x-auth",receivedToken).send(newUser);
+    }).catch(e=>{
+        response.status(400).send(e);
+        console.log(e);
     })
 });
 
