@@ -5,6 +5,7 @@ let {TodoModel} = require("./model/TodoListModel");
 let {UserModel} = require("./model/UserModel");
 let {ObjectID} = require("mongodb");
 let _ = require("lodash");
+let {authenticate} = require("./middleware/middleware");
 
 let port = process.env.PORT || 3000;
 let app = express();
@@ -32,6 +33,11 @@ app.post("/users",(request,response)=>{
         response.status(400).send(e);
         console.log(e);
     })
+});
+
+
+app.get("/users/me",authenticate,(request,response)=>{
+   response.send(request.user); 
 });
 
 app.get("/todos",(request,response)=>{

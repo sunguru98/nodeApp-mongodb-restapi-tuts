@@ -31,6 +31,22 @@ let UserSchema = new mongoose.Schema({
         }
     }],
 });
+UserSchema.statics.findByToken = function(token){
+    let currentUser = this;
+    let decodedToken;
+    try{
+        decodedToken = jwt.verify(token,"SundeepCharan");
+    }  
+    catch(e){
+        return Promise.reject();
+    }
+    return UserModel.findOne({
+
+        "_id":decodedToken._id,
+        "tokens.token":token,
+        "tokens.access":"auth",    
+    })
+}
 
 UserSchema.methods.generateAuthToken = function(){
     let currentUser = this;
