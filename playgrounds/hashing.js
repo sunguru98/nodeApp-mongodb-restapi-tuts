@@ -1,12 +1,20 @@
 let jwt = require("jsonwebtoken");
+let bcrypt = require("bcryptjs");
 
-let userObject = {
-    name:"R.Sundeep",
-    age:20
-};
+let password = "Sundeep1998";
+bcrypt.genSalt(20,(err,salt)=>{
+    bcrypt.hash(password,salt,(err,result)=>{
+        console.log(result);
+    })
+})
 
-let encodeJwt = jwt.sign(userObject,"Sundeep1998");
-console.log(encodeJwt);
+// let userObject = {
+//     name:"R.Sundeep",
+//     age:20
+// };
 
-decodedJwt = jwt.verify(encodeJwt,"Sundeep1998");
-console.log(decodedJwt);
+// let encodeJwt = jwt.sign(userObject,"Sundeep1998");
+// console.log(encodeJwt);
+
+// decodedJwt = jwt.verify(encodeJwt,"Sundeep1998");
+// console.log(decodedJwt);

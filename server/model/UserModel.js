@@ -2,6 +2,7 @@ let mongoose = require("mongoose");
 let validator = require("validator");
 let jwt = require("jsonwebtoken");
 let _ = require("lodash");
+let bcrypt = require("bcryptjs");
 
 let UserSchema = new mongoose.Schema({
     email:{
@@ -49,22 +50,35 @@ UserSchema.statics.findByToken = function(token){
 }
 
 UserSchema.methods.generateAuthToken = function(){
-    let currentUser = this;
-
+    let currentUser = this; 
     let access = "auth";
     let tokenToBeConverted = {
         _id : currentUser._id.toHexString(),
         access
     }
     let token = jwt.sign(tokenToBeConverted,"SundeepCharan").toString();
-    console.log(token);
     currentUser.tokens = currentUser.tokens.concat([{access,token}]);
     
     return currentUser.save().then(()=>{
         return token;
     });
 };
-
+UserSchema.pre("save",function(next){
+    let currentUser = this;
+    
+    if(currentUser.isModified("password")){
+        bcrypt.genSalt(10,(err,salt)=>{
+            bcrypt.hash(currentUser.password,salt,(err,hashedPassword)=>{
+                currentUser.password = hashedPassword;
+                next();
+            });
+        });
+        
+    }
+    else{
+        next();
+    }
+})
 UserSchema.methods.toJSON = function(){
     let currentUser=this;
     let userObject = currentUser.toObject();
