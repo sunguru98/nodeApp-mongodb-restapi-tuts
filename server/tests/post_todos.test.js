@@ -3,25 +3,12 @@ let expect = require("expect");
 let {app} = require("./../server");
 let {TodoModel} = require("./../model/TodoListModel");
 let {ObjectID} = require("mongodb");
+let {UserModel} = require("./../model/UserModel");
+let {dummyUsers,dummyTodos,populateTodos,populateUsers} = require("./seeds/seeds");
 
-let dummyTodos = [{
-    _id:new ObjectID(),
-    noteName:"Hello There"
-},{
-    _id:new ObjectID(),
-    noteName:"Hi Everyone !"
-},{
-    _id:new ObjectID(),
-    noteName:"Goodbye ALL of you present !",
-    noteCompleted:true,
-    noteToBeCompletedAt:234346,
-}];
+beforeEach(populateUsers);
+beforeEach(populateTodos);
 
-beforeEach(done=>{
-    TodoModel.deleteMany({}).then(()=>{
-        TodoModel.insertMany(dummyTodos)
-    }).then(()=>done());
-}); 
 describe("POST/todos",()=>{
     it("should return a valid object from database when valid data is given",done=>{
         let noteName = "Vanakkam Coimbatore";
@@ -184,5 +171,71 @@ describe("PATCH /todos/:id",()=>{
                     done();
                 }).catch(e=>{done(e)})
             });
+    });
+});
+
+describe("GET users/me",()=>{
+    it("should authenticate when given correct token format",(done)=>{
+        request(app)
+            .get("/users/me")
+            .set("x-auth",dummyUsers[0].tokens[0].token)
+            .expect(200)
+            .expect(res=>{
+                
+                expect(res.body._id).toBe(dummyUsers[0]._id.toHexString());
+                expect(res.body.email).toBe(dummyUsers[0].email);
+            })
+            .end(done);
+    });
+
+    it("should give a 401 if a wrong or no token is given",(done)=>{
+        request(app)
+            .get("/users/me")
+            .set("x-auth","")
+            .expect(401)
+            .end(done);
+    });
+});
+
+describe("/POST/users",()=>{
+    it("should successfully create a unique user",(done)=>{
+        let testEmail = "sunguru98@gmail.com";
+        let testPassword = "Sundeep1998";
+        request(app)
+            .post("/users")
+            .send({email:testEmail,password:testPassword})
+            .expect(200)
+            .expect(res=>{
+                expect(res.headers["x-auth"]).toBeTruthy();
+                expect(res.body._id).toBeTruthy();
+                expect(res.body.email).toBe(testEmail)
+            })
+            .end(err=>{
+                if(err)
+                    done(err);
+                UserModel.findOne({email:testEmail}).then(user=>{
+                    expect(user).toBeTruthy();
+                    expect(user.password).not.toBe(testPassword);
+                    done();
+                });
+            });
+    });
+
+    it("should return bad request for invalid email and password",(done)=>{
+        let testEmail = "sundeepCharan";
+        let testPassword = "te";
+        request(app)
+            .post("/users")
+            .send({email:testEmail,password:testPassword})
+            .expect(400)
+            .end(done)
+    });
+
+    it("should return a bad request if given an already existed email",(done)=>{
+        request(app)
+            .post("/users")
+            .send({email:dummyUsers[0].email,password:dummyUsers[0].password})
+            .expect(400)
+            .end(done)
     });
 });
