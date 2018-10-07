@@ -282,3 +282,20 @@ describe("POST/users/login",()=>{
         });
     });
 });
+
+describe("DELETE/users/me/token",()=>{
+    it("should deletle the token when logging off",(done)=>{
+        request(app)
+            .delete("/users/me/token")
+            .set("x-auth",dummyUsers[0].tokens[0].token)
+            .expect(200)
+            .end(err=>{
+                if(err)
+                    return done(err);
+                UserModel.findById(dummyUsers[0]._id).then(user=>{
+                    expect(user.tokens.length).toBe(0);
+                    done()
+                }).catch(err=>done(err));
+            });
+    });
+});
