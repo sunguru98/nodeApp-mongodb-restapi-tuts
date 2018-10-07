@@ -5,6 +5,7 @@ let {TodoModel} = require("./model/TodoListModel");
 let {UserModel} = require("./model/UserModel");
 let {ObjectID} = require("mongodb");
 let _ = require("lodash");
+let bcrypt = require("bcryptjs");
 let {authenticate} = require("./middleware/middleware");
 
 
@@ -36,6 +37,23 @@ app.post("/users",(request,response)=>{
     })
 });
 
+app.post("/users/login",(request,response)=>{
+    let userDetails = _.pick(request.body,["email","password"]);
+    UserModel.findOne({email:userDetails.email}).then(user=>{
+        if(!user)
+            return response.status(400).send();
+        bcrypt.compare(userDetails.password,user.password,(err,result)=>{
+            if(!result)
+                return response.status(401).send();
+            return user.generateAuthToken().then(token=>{
+                response.header("x-auth",token).status(200).send(user);
+            })    
+            
+        });
+    }).catch(e=>{
+        return response.status(401).send();
+    });
+});
 
 app.get("/users/me",authenticate,(request,response)=>{
    response.send(request.user); 
