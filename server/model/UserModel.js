@@ -48,7 +48,12 @@ UserSchema.statics.findByToken = function(token){
         "tokens.access":"auth",    
     })
 }
-
+UserSchema.methods.removeToken = function(token){
+    let currentUser = this;
+    return currentUser.update({
+        $pull:{tokens:{token}}
+    });
+}
 UserSchema.methods.generateAuthToken = function(){
     let currentUser = this; 
     let access = "auth";
