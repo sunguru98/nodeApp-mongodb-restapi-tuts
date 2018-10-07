@@ -8,7 +8,7 @@ let userTwo = new ObjectID();
 
 let dummyUsers = [{
     _id: userOne,
-    email:"sunguru98@yahoo.co.in",
+    email:"sunguru99@yahoo.co.in",
     password:"Nitya43219",
     tokens:[{
         access:"auth",
@@ -16,7 +16,7 @@ let dummyUsers = [{
     }]
 },{
     _id: userTwo,
-    email:"sunguru98@gmail.co.in",
+    email:"sunguru99@gmail.co.in",
     password:"Nitya43219", 
 }]
 

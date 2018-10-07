@@ -217,7 +217,7 @@ describe("/POST/users",()=>{
                     expect(user).toBeTruthy();
                     expect(user.password).not.toBe(testPassword);
                     done();
-                });
+                }).catch(e=>done(e));
             });
     });
 
@@ -237,5 +237,48 @@ describe("/POST/users",()=>{
             .send({email:dummyUsers[0].email,password:dummyUsers[0].password})
             .expect(400)
             .end(done)
+    });
+});
+
+describe("POST/users/login",()=>{
+    it("should successfully login if given valid credentials",done=>{
+        let resultHeader;
+        request(app)
+            .post("/users/login")
+            .send({email:dummyUsers[1].email,password:dummyUsers[1].password})
+            .expect(200)
+            .expect(result=>{
+                resultHeader = result.headers["x-auth"];
+                expect(result.headers["x-auth"]).toBeTruthy();
+            })
+            .end(err=>{
+                if(err)
+                   return done(err);
+                UserModel.findById(dummyUsers[1]._id).then(user=>{
+                    expect(user.toObject().tokens[0]).toMatchObject({
+                        "access":"auth",
+                        "token":resultHeader,
+                    });
+                    done();
+                }).catch(e=>done(e));
+            });
+    });
+
+    it("should give an invalid response when invalid credentials are given",done=>{
+        request(app)
+        .post("/users/login")
+        .send({email:dummyUsers[1].email,password:"aassds"})
+        .expect(401)
+        .expect(result=>{
+            expect(result.headers["x-auth"]).toBeFalsy();
+        })
+        .end(err=>{
+            if(err)
+               return done(err);
+            UserModel.findById(dummyUsers[1]._id).then(user=>{
+                expect(user.tokens.length).toBe(0);
+                done();
+            }).catch(e=>done(e));
+        });
     });
 });
