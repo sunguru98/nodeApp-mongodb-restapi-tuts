@@ -5,6 +5,7 @@ let jwt = require("jsonwebtoken");
 
 let userOne = new ObjectID();
 let userTwo = new ObjectID();
+let userThree = new ObjectID();
 
 let dummyUsers = [{
     _id: userOne,
@@ -18,19 +19,31 @@ let dummyUsers = [{
     _id: userTwo,
     email:"sunguru99@gmail.co.in",
     password:"Nitya43219", 
+    tokens:[{
+        access:"auth",
+        token:jwt.sign({_id:userTwo,access:"auth"},"SundeepCharan").toString()
+    }]
+},
+{
+    _id: userThree,
+    email:"sunguru100@gmail.co.in",
+    password:"Nitya43219", 
 }]
 
 let dummyTodos = [{
     _id:new ObjectID(),
-    noteName:"Hello There"
+    noteName:"Hello There",
+    _userCreatedId:userOne
 },{
     _id:new ObjectID(),
-    noteName:"Hi Everyone !"
+    noteName:"Hi Everyone !",
+    _userCreatedId:userTwo
 },{
     _id:new ObjectID(),
     noteName:"Goodbye ALL of you present !",
     noteCompleted:true,
     noteToBeCompletedAt:234346,
+    _userCreatedId:userThree
 }];
 
 const populateTodos = (done=>{

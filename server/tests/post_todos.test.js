@@ -14,6 +14,7 @@ describe("POST/todos",()=>{
         let noteName = "Vanakkam Coimbatore";
         request(app)
             .post("/todos")
+            .set("x-auth",dummyUsers[0].tokens[0].token)
             .send({noteName})
             .expect(200)
             .expect(result=>{
@@ -34,6 +35,7 @@ describe("POST/todos",()=>{
     it("should not create a row when no Object is inputted",done=>{
         request(app)
             .post("/todos")
+            .set("x-auth",dummyUsers[0].tokens[0].token)
             .send({})
             .expect(400)
             .end((err,res)=>{
@@ -53,9 +55,10 @@ describe("GET /todos",()=>{
         
         request(app)
             .get("/todos")
+            .set("x-auth",dummyUsers[0].tokens[0].token)
             .expect(200)
             .expect(res=>{
-                expect(res.body.results.length).toBe(3) ;
+                expect(res.body.results.length).toBe(1) ;
             })
             .end(done);
     });
@@ -65,6 +68,7 @@ describe("GET/todos/:id",()=>{
     it("should return the correct todo when passing correct id",(done)=>{
         request(app)
             .get(`/todos/${dummyTodos[0]._id.toHexString()}`)
+            .set("x-auth",dummyUsers[0].tokens[0].token)
             .expect(200)
             .expect(res=>{
                 expect(res.body.todo.noteName).toBe(dummyTodos[0].noteName);
@@ -72,16 +76,26 @@ describe("GET/todos/:id",()=>{
             .end(done);
     });
 
-    it("should return 404 if given id doesn't exist",(done)=>{
+    it("should not return the todo when passing some user's id",(done)=>{
+        request(app)
+            .get(`/todos/${dummyTodos[1]._id.toHexString()}`)
+            .set("x-auth",dummyUsers[0].tokens[0].token)
+            .expect(400) 
+            .end(done);
+    });
+
+    it("should return 400 if given id doesn't exist",(done)=>{
         request(app)
             .get(`/todos/${new ObjectID().toHexString()}`)
-            .expect(404)
+            .set("x-auth",dummyUsers[0].tokens[0].token)
+            .expect(400)
             .end(done);
     });
 
     it("should return 404 if it is not a syntactical correct id",(done)=>{
         request(app)
             .get(`/todos/123}`)
+            .set("x-auth",dummyUsers[0].tokens[0].token)
             .expect(404)
             .end(done);
     });
@@ -93,15 +107,32 @@ describe("DELETE/todos/:id",()=>{
         let inputtedId = dummyTodos[0]._id.toHexString();
         request(app)
             .delete(`/todos/${inputtedId}`)
+            .set("x-auth",dummyUsers[0].tokens[0].token)
             .expect(200)
             .expect(res=>{
                 expect(res.body.todo._id).toBe(inputtedId);
             })
             .end((err,res)=>{
                 if(err)
-                    done(err);
+                    return done(err);
                 TodoModel.findById(inputtedId).then((res)=>{
                     expect(res).toBeFalsy();
+                    done();
+                }).catch(e=>{done(e)})
+            });
+    });
+
+    it("should not delete a document of some other id",(done)=>{
+        let inputtedId = dummyTodos[1]._id.toHexString();
+        request(app)
+            .delete(`/todos/${inputtedId}`)
+            .set("x-auth",dummyUsers[0].tokens[0].token)
+            .expect(404)
+            .end((err,res)=>{
+                if(err)
+                    return done(err);
+                TodoModel.findById(inputtedId).then((res)=>{
+                    expect(res).toBeTruthy();
                     done();
                 }).catch(e=>{done(e)})
             });
@@ -110,6 +141,7 @@ describe("DELETE/todos/:id",()=>{
     it("doesnt delete when no id is present even if it is valid",(done)=>{
         request(app)
             .delete(`/todos/${new ObjectID().toHexString()}`)
+            .set("x-auth",dummyUsers[0].tokens[0].token)
             .expect(404)
             .end(done);
     });
@@ -117,6 +149,7 @@ describe("DELETE/todos/:id",()=>{
     it("should not delete when given an invalid id",(done)=>{
         request(app)
         .delete(`/todos/123}`)
+        .set("x-auth",dummyUsers[0].tokens[0].token)
         .expect(404)
         .end(done);
     })
@@ -125,9 +158,10 @@ describe("DELETE/todos/:id",()=>{
 describe("PATCH /todos/:id",()=>{
     it("should update the todo",(done)=>{
         let noteName = "Test Running through mocha";
-        let inputtedId = dummyTodos[2]._id.toHexString();
+        let inputtedId = dummyTodos[0]._id.toHexString();
         request(app)
             .patch(`/todos/${inputtedId}`)
+            .set("x-auth",dummyUsers[0].tokens[0].token)
             .send({noteName,noteCompleted:true})
             .expect(200)
             .expect(res=>{
@@ -138,7 +172,7 @@ describe("PATCH /todos/:id",()=>{
             })
             .end((err,res)=>{
                 if(err)
-                    done(err);
+                    return done(err);
                     TodoModel.findById(inputtedId).then(todo=>{
                         expect(todo.noteName).toBe(noteName);
                         expect(todo.noteCompleted).toBe(true);
@@ -148,11 +182,31 @@ describe("PATCH /todos/:id",()=>{
             });
         });
 
+        it("should not update the todo when given some other id",(done)=>{
+            let noteName = "Test Running through mocha";
+            let inputtedId = dummyTodos[1]._id.toHexString();
+            request(app)
+                .patch(`/todos/${inputtedId}`)
+                .set("x-auth",dummyUsers[0].tokens[0].token)
+                .send({noteName,noteCompleted:true})
+                .expect(404)
+                .end((err,res)=>{
+                    if(err)
+                        return done(err);
+                        TodoModel.findById(inputtedId).then(todo=>{
+                            expect(todo.noteName).not.toBe(noteName);
+                            expect(todo.noteCompleted).not.toBe(true);
+                        done();
+                    }).catch(e=>{done(e)})
+                });
+            });
+
     it("should clear completedAt when todo is not completed",(done)=>{
         inputtedId = dummyTodos[1]._id.toHexString();
         let noteName = "Updated Text for testing";
         request(app)
             .patch(`/todos/${inputtedId}`)
+            .set("x-auth",dummyUsers[1].tokens[0].token)
             .send({noteName,noteCompleted:false})
             .expect(200)
             .expect(res=>{
@@ -163,11 +217,11 @@ describe("PATCH /todos/:id",()=>{
             })
             .end((err,res)=>{
                 if(err)
-                    done(err);
-                    TodoModel.findById(inputtedId).then(todo=>{
-                        expect(todo.noteName).toBe(noteName);
-                        expect(todo.noteCompleted).toBe(false);
-                        expect(res.body.todoResult.noteToBeCompletedAt).toBeFalsy();
+                    return done(err);
+                TodoModel.findById(inputtedId).then(todo=>{
+                    expect(todo.noteName).toBe(noteName);
+                    expect(todo.noteCompleted).toBe(false);
+                    expect(res.body.todoResult.noteToBeCompletedAt).toBeFalsy();
                     done();
                 }).catch(e=>{done(e)})
             });
@@ -255,7 +309,7 @@ describe("POST/users/login",()=>{
                 if(err)
                    return done(err);
                 UserModel.findById(dummyUsers[1]._id).then(user=>{
-                    expect(user.toObject().tokens[0]).toMatchObject({
+                    expect(user.toObject().tokens[1]).toMatchObject({
                         "access":"auth",
                         "token":resultHeader,
                     });
@@ -276,7 +330,7 @@ describe("POST/users/login",()=>{
             if(err)
                return done(err);
             UserModel.findById(dummyUsers[1]._id).then(user=>{
-                expect(user.tokens.length).toBe(0);
+                expect(user.tokens.length).toBe(1);
                 done();
             }).catch(e=>done(e));
         });

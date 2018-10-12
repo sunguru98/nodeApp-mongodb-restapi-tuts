@@ -14,6 +14,10 @@ let TodoModel = mongoose.model("TodoModel",{
     noteToBeCompletedAt:{
         type:Number,
         default:null
+    },
+    _userCreatedId:{
+        type:mongoose.Schema.Types.ObjectId,
+        required:true
     }   
 });
 

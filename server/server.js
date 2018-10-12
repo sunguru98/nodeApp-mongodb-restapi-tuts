@@ -14,9 +14,9 @@ let app = express();
 
 app.use(bodyParser.json());
 
-app.post("/todos",(request,response)=>{
+app.post("/todos",authenticate,(request,response)=>{
     let noteName = request.body.noteName;
-    let newNote = new TodoModel({noteName});
+    let newNote = new TodoModel({noteName,_userCreatedId:request.user._id});
     newNote.save().then(result=>{
         response.send(result);
     },err=>{
@@ -59,21 +59,24 @@ app.get("/users/me",authenticate,(request,response)=>{
    response.send(request.user); 
 });
 
-app.get("/todos",(request,response)=>{
-    TodoModel.find().then(results=>{
+app.get("/todos",authenticate,(request,response)=>{
+    TodoModel.find({_userCreatedId:request.user._id}).then(results=>{
         response.send({results});
     },err=>{
         response.status(400).send(err);
     })
 });
 
-app.get("/todos/:id",(request,response)=>{
+app.get("/todos/:id",authenticate,(request,response)=>{
     let receivedId = request.params.id;
     if(!ObjectID.isValid(receivedId))
         return response.status(404).send();
-    TodoModel.findById(receivedId).then(todo=>{
+    TodoModel.findOne({
+        _id:receivedId,
+        _userCreatedId:request.user._id
+    }).then(todo=>{
         if(!todo){
-            return response.status(404).send();
+            return response.status(404).send(e);
         }
         response.send({todo});
     }).catch(e=>{
@@ -81,11 +84,14 @@ app.get("/todos/:id",(request,response)=>{
     });
 });
 
-app.delete("/todos/:id",(req,res)=>{
+app.delete("/todos/:id",authenticate,(req,res)=>{
     let receivedId = req.params.id;
     if(!ObjectID.isValid(receivedId))
         return res.status(404).send();
-    TodoModel.findByIdAndRemove(receivedId).then(todo=>{
+    TodoModel.findOneAndRemove({
+        _id:receivedId,
+        _userCreatedId:req.user._id
+    }).then(todo=>{
         if(!todo)
             return res.status(404).send();
          res.status(200).send({todo});
@@ -103,7 +109,7 @@ app.delete("/users/me/token",authenticate,(req,res)=>{
     });
 });
 
-app.patch("/todos/:id",(req,res)=>{
+app.patch("/todos/:id",authenticate,(req,res)=>{
     let inputtedId = req.params.id;
     let updatedItemsObject = _.pick(req.body,["noteName","noteCompleted"]);
     if(!ObjectID.isValid(inputtedId))
@@ -113,7 +119,10 @@ app.patch("/todos/:id",(req,res)=>{
     }else{
         updatedItemsObject.noteToBeCompletedAt = null;
     }
-    TodoModel.findByIdAndUpdate(inputtedId,{$set:updatedItemsObject},{new:true})
+    TodoModel.findOneAndUpdate({
+        _id:inputtedId,
+        _userCreatedId:req.user._id,
+    },{$set:updatedItemsObject},{new:true})
         .then((todoResult)=>{
             if(!todoResult)
                 return res.status(404).send();
